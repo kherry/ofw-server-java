@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ofw-server-config
+  namespace: ofw
+  labels:
+    app: ofw-server
+data:
+  DB_HOST: "mysql-0.mysql.ofw.svc.cluster.local"
+  DB_PORT: "3306"
+  DB_NAME: "ofw_db"
+  SERVER_PORT: "8080"
+  SHOW_SQL: "false"
+  UPLOAD_TEMP_DIR: "/tmp/ofw-uploads"

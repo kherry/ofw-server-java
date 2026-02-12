@@ -1,0 +1,31 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ofw-server-ingress
+  namespace: ofw
+  labels:
+    app: ofw-server
+  annotations:
+    # Add annotations based on your ingress controller
+    # For NGINX Ingress Controller:
+    # nginx.ingress.kubernetes.io/rewrite-target: /
+    # For cert-manager (HTTPS):
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx  # Change based on your ingress controller
+  rules:
+  - host: ofw.example.com  # Change to your domain
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: ofw-server
+            port:
+              number: 80
+  # Uncomment for HTTPS
+  # tls:
+  # - hosts:
+  #   - ofw.example.com
+  #   secretName: ofw-tls-secret

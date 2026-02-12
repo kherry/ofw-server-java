@@ -1,0 +1,116 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ofw-server
+  namespace: ofw
+  labels:
+    app: ofw-server
+    tier: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ofw-server
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: ofw-server
+        tier: backend
+    spec:
+      initContainers:
+      # Wait for MySQL to be ready
+      - name: wait-for-mysql
+        image: busybox:1.35
+        command:
+        - sh
+        - -c
+        - |
+          echo "Waiting for MySQL to be ready..."
+          until nc -z mysql-0.mysql.ofw.svc.cluster.local 3306; do
+            echo "MySQL not ready, waiting..."
+            sleep 5
+          done
+          echo "MySQL is ready!"
+      containers:
+      - name: ofw-server
+        image: ofw-server:latest  # Replace with your actual image
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        env:
+        - name: DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: ofw-server-config
+              key: DB_HOST
+        - name: DB_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: ofw-server-config
+              key: DB_PORT
+        - name: DB_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: ofw-server-config
+              key: DB_NAME
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: mysql-user
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: mysql-password
+        - name: SERVER_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: ofw-server-config
+              key: SERVER_PORT
+        - name: SHOW_SQL
+          valueFrom:
+            configMapKeyRef:
+              name: ofw-server-config
+              key: SHOW_SQL
+        - name: UPLOAD_TEMP_DIR
+          valueFrom:
+            configMapKeyRef:
+              name: ofw-server-config
+              key: UPLOAD_TEMP_DIR
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /api/v1/upload/health
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /api/v1/upload/health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        volumeMounts:
+        - name: upload-temp
+          mountPath: /tmp/ofw-uploads
+      volumes:
+      - name: upload-temp
+        emptyDir: {}

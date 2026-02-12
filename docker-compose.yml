@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: ofw-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: ofw_db
+      MYSQL_USER: ofw_user
+      MYSQL_PASSWORD: ofw_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ofw-network
+
+  # OFW Server Application
+  ofw-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ofw-server
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: ofw_db
+      DB_USER: ofw_user
+      DB_PASSWORD: ofw_password
+      SERVER_PORT: 8080
+      SHOW_SQL: "true"
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - upload_data:/tmp/ofw-uploads
+    networks:
+      - ofw-network
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+    driver: local
+  upload_data:
+    driver: local
+
+networks:
+  ofw-network:
+    driver: bridge
