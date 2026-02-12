@@ -29,32 +29,7 @@ Mock server for Our Family Wizard API with database persistence.
 
 ### Layer Architecture
 
-```
-┌─────────────────────────────────────────┐
-│         Controller Layer                │
-│  (REST API Endpoints)                   │
-│  - UploadController                     │
-└─────────────────┬───────────────────────┘
-                  │
-┌─────────────────▼───────────────────────┐
-│         Service Layer                   │
-│  (Business Logic)                       │
-│  - UploadService (Facade)               │
-│  - FileProcessors (Strategy)            │
-└─────────────────┬───────────────────────┘
-                  │
-┌─────────────────▼───────────────────────┐
-│       Repository Layer                  │
-│  (Data Access)                          │
-│  - Spring Data JPA Repositories         │
-└─────────────────┬───────────────────────┘
-                  │
-┌─────────────────▼───────────────────────┐
-│         Entity Layer                    │
-│  (Domain Model)                         │
-│  - User, Message, Folder, etc.          │
-└─────────────────────────────────────────┘
-```
+See [API_DOCUMENTATION.MD](API_DOCUMENTATION.md)
 
 ## Prerequisites
 
